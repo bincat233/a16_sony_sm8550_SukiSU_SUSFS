@@ -57,6 +57,7 @@ apply_patch "$WORK/susfs/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch
 apply_patch "$ROOT/patches/fix_priority_uid_filter_kconfig.patch"
 # Guard unused helpers as fallback when CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER is disabled
 apply_patch "$ROOT/patches/susfs-2.4.0-priority-uid-filter-unused-fix.patch"
+apply_patch "$ROOT/patches/silence-log-spam.patch"
 
 if [[ $ENABLE_LZ4 == true ]]; then
   fetch_source "$LZ4_REPO" "$LZ4_SHA" "$WORK/lz4"
@@ -95,8 +96,8 @@ CONFIG="$KERNEL/scripts/config"
   -e NTFS3_FS -e NTFS3_FS_POSIX_ACL \
   -e EROFS_FS_ZIP_LZMA \
   -e IP_SET -e IP_SET_HASH_IP -e IP_SET_HASH_NET \
-  -e TCP_CONG_WESTWOOD \
-  -e NET_SCH_CAKE -e USER_NS -e CPU_FREQ_GOV_ONDEMAND
+  -e TCP_CONG_WESTWOOD -e TCP_CONG_BBR \
+  -e NET_SCH_CAKE -e USER_NS -e PID_NS -e POSIX_MQUEUE -e IPC_NS -e UTS_NS -e CPU_FREQ_GOV_ONDEMAND
 if [[ $USE_THINLTO == true ]]; then
   "$CONFIG" --file "$CFG" -d LTO_CLANG_FULL -e LTO_CLANG_THIN
 fi
