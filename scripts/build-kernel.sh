@@ -47,6 +47,7 @@ cp "$KERNEL/out/System.map" "$ROOT/dist/System.map"
 [[ $(stat -c %s "$ROOT/dist/Image-pdx234") -lt 100000000 ]]
 # Keep newly built zram modules for inspection when building the stock-compression variant.
 find "$KERNEL/out" -name '*.ko' -print > "$ROOT/dist/built-modules.txt"
+rm -rf "$WORK/anykernel"
 git init -q "$WORK/anykernel"
 git -C "$WORK/anykernel" remote add origin "$AK3_REPO"
 git -C "$WORK/anykernel" fetch --depth=1 origin "$AK3_SHA"
