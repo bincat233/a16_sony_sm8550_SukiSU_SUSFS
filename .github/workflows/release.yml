@@ -123,7 +123,9 @@ jobs:
           test -n "$RUN_ID"
           gh run download "$RUN_ID" --repo Baka-SU/BakaSU --name ksud-aarch64-linux-android --dir work/BakaSU/ksud-arm64
           mkdir -p work/BakaSU/target/aarch64-linux-android/release
-          cp work/BakaSU/ksud-arm64/ksud work/BakaSU/target/aarch64-linux-android/release/ksud
+          KSUD_BIN=$(find work/BakaSU/ksud-arm64 -type f -name ksud | head -n 1)
+          test -n "$KSUD_BIN"
+          cp "$KSUD_BIN" work/BakaSU/target/aarch64-linux-android/release/ksud
           chmod +x work/BakaSU/target/aarch64-linux-android/release/ksud
 
           w1=$(tr -dc 'a-z' </dev/urandom | head -c6)
