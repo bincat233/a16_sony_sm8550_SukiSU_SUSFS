@@ -96,3 +96,73 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 30
+
+  build-spoofed-manager:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Build Spoofed Manager APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          source configs/sources.env
+          mkdir -p work
+          git init work/BakaSU
+          git -C work/BakaSU remote add origin "$KSU_REPO"
+          git -C work/BakaSU fetch --depth 1 origin "$KSU_SHA"
+          git -C work/BakaSU checkout --detach FETCH_HEAD
+
+          RUN_ID=$(gh api "repos/Baka-SU/BakaSU/actions/workflows/build-manager.yml/runs?head_sha=$KSU_SHA&status=success&per_page=10" \
+            --jq '.workflow_runs[0].id // empty')
+          test -n "$RUN_ID"
+          gh run download "$RUN_ID" --repo Baka-SU/BakaSU --name ksud-aarch64-linux-android --dir work/BakaSU/ksud-arm64
+          mkdir -p work/BakaSU/target/aarch64-linux-android/release
+          cp work/BakaSU/ksud-arm64/ksud work/BakaSU/target/aarch64-linux-android/release/ksud
+          chmod +x work/BakaSU/target/aarch64-linux-android/release/ksud
+
+          w1=$(tr -dc 'a-z' </dev/urandom | head -c6)
+          w2=$(tr -dc 'a-z' </dev/urandom | head -c6)
+          w3=$(tr -dc 'a-z' </dev/urandom | head -c6)
+          PKG_NAME="${w1}.${w2}.${w3}"
+          echo "Building manager with package name: $PKG_NAME"
+
+          cd work/BakaSU/manager
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -Pcommit="$KSU_SHA" \
+            -PKSU_PACKAGE_NAME="$PKG_NAME" \
+            -PKSU_NAME="BakaSU" \
+            -PIS_SPOOFED_BUILD=true
+
+          cd ..
+          keytool -genkeypair -alias baka -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass bakasu -keypass bakasu -dname "CN=BakaSU,O=Android,C=US" \
+            -keystore key.jks
+
+          python3 repack_apk_multi.py repack \
+            -b release \
+            -t release \
+            -a arm64-v8a \
+            -K key.jks \
+            -A baka \
+            -P bakasu \
+            -S bakasu
+
+          mkdir -p "$GITHUB_WORKSPACE/dist-manager"
+          cp dist/*.apk "$GITHUB_WORKSPACE/dist-manager/"
+          echo "Package Name: $PKG_NAME" > "$GITHUB_WORKSPACE/dist-manager/package_info.txt"
+          echo "BakaSU Commit: $KSU_SHA" >> "$GITHUB_WORKSPACE/dist-manager/package_info.txt"
+          (cd "$GITHUB_WORKSPACE/dist-manager" && sha256sum ./*.apk >> SHA256SUMS)
+
+      - name: Upload Spoofed Manager
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pdx234-bakasu-spoofed-manager
+          path: dist-manager/
+
