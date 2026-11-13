@@ -1,0 +1,20 @@
+diff --git a/kernel/module.c b/kernel/module.c
+index a2502e908..99b2c3d95 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -3596,6 +3596,15 @@ static bool blacklisted(const char *module_name)
+ 	const char *p;
+ 	size_t len;
+ 
++#if IS_BUILTIN(CONFIG_ZRAM)
++	if (!strcmp(module_name, "zram"))
++		return true;
++#endif
++#if IS_BUILTIN(CONFIG_ZSMALLOC)
++	if (!strcmp(module_name, "zsmalloc"))
++		return true;
++#endif
++
+ 	if (!module_blacklist)
+ 		return false;
+ 
