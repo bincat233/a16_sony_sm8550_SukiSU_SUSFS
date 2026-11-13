@@ -38,7 +38,8 @@ jobs:
     env:
       ENABLE_ZRAM: ${{ github.event_name == 'push' || inputs.enable_zram }}
       ENABLE_LZ4: ${{ inputs.enable_lz4 }}
-      BUILD_JOBS: '2'
+      BUILD_JOBS: '4'
+      LTO_JOBS: '2'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Prepare runner disk and tools
@@ -49,10 +50,11 @@ jobs:
           sudo apt-get install -y bc bison flex build-essential libssl-dev libelf-dev \
             dwarves binutils-aarch64-linux-gnu binutils-arm-linux-gnueabi zip curl git
           sudo swapoff -a
-          sudo fallocate -l 16G /mnt/kernel-build.swap
+          sudo fallocate -l 36G /mnt/kernel-build.swap
           sudo chmod 600 /mnt/kernel-build.swap
           sudo mkswap /mnt/kernel-build.swap
           sudo swapon /mnt/kernel-build.swap
+          sudo sysctl -w vm.swappiness=60
           df -h . /mnt
           free -h
       - name: Fetch pinned compiler

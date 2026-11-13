@@ -46,7 +46,7 @@ index 1e76c80a3..715523d57 100644
  
 +#if defined(CONFIG_ARM64) && defined(CONFIG_KERNEL_MODE_NEON)
 +	ret = LZ4_arm64_decompress_safe(dic->cbuf->cdata, dic->rbuf,
-+						dic->clen, dic->rlen);
++						dic->clen, dic->rlen, false);
 +#else
  	ret = LZ4_decompress_safe(dic->cbuf->cdata, dic->rbuf,
 -						dic->clen, dic->rlen);
@@ -73,3 +73,15 @@ index 5abb20a10..613e7919b 100644
  		if (result < 0)
  			return -EBADMSG;
  		return result;
+diff --git a/lib/lz4/lz4hc.c b/lib/lz4/lz4hc.c
+--- a/lib/lz4/lz4hc.c
++++ b/lib/lz4/lz4hc.c
+@@ -77,4 +77,8 @@
+ /*===   Macros   ===*/
++#ifndef MIN
+ #define MIN(a, b) ((a) < (b) ? (a) : (b))
++#endif
++#ifndef MAX
+ #define MAX(a, b) ((a) > (b) ? (a) : (b))
++#endif
+

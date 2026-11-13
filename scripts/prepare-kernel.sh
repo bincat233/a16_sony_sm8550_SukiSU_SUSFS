@@ -52,9 +52,9 @@ grep -q '#define DEFINE_LSM(lsm)' "$KERNEL/include/linux/lsm_hooks.h"
 cp "$WORK/susfs/kernel_patches/fs/"* "$KERNEL/fs/"
 cp "$WORK/susfs/kernel_patches/include/linux/"* "$KERNEL/include/linux/"
 apply_patch "$WORK/susfs/kernel_patches/50_add_susfs_in_gki-android13-5.15.patch"
-# SUSFS 2.4.0 keeps the priority-uid-filter helpers outside that feature's guard,
-# so they turn into -Werror unused-function when CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER
-# is off (it is not part of the pinned BakaSU Kconfig). Guard them to match their only uses.
+# Restore missing KSU_SUSFS_PRIORITY_UID_FILTER to KernelSU Kconfig (SUSFS 2.4.0 feature)
+apply_patch "$ROOT/patches/fix_priority_uid_filter_kconfig.patch"
+# Guard unused helpers as fallback when CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER is disabled
 apply_patch "$ROOT/patches/susfs-2.4.0-priority-uid-filter-unused-fix.patch"
 
 if [[ $ENABLE_LZ4 == true ]]; then
