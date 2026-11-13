@@ -5,7 +5,7 @@ source "$ROOT/configs/sources.env"
 WORK=${WORK:-"$ROOT/work"}
 KERNEL="$WORK/kernel"
 ENABLE_ZRAM=${ENABLE_ZRAM:-true}
-ENABLE_LZ4=${ENABLE_LZ4:-false}
+ENABLE_LZ4=${ENABLE_LZ4:-true}
 export PATH="${CLANG_DIR:-$ROOT/clang}/bin:$PATH"
 export TMPDIR="$WORK/tmp"
 mkdir -p "$TMPDIR" "$ROOT/dist"

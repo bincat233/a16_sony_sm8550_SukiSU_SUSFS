@@ -18,7 +18,7 @@ on:
       enable_lz4:
         description: 'Also upgrade LZ4 to 1.10.0 (experimental, separate from LZ4KD)'
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
@@ -37,7 +37,7 @@ jobs:
     timeout-minutes: 120
     env:
       ENABLE_ZRAM: ${{ github.event_name == 'push' || inputs.enable_zram }}
-      ENABLE_LZ4: ${{ inputs.enable_lz4 }}
+      ENABLE_LZ4: ${{ github.event_name == 'push' || inputs.enable_lz4 }}
       BUILD_JOBS: '4'
       LTO_JOBS: '2'
     steps:

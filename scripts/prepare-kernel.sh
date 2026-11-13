@@ -4,7 +4,7 @@ ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 source "$ROOT/configs/sources.env"
 WORK=${WORK:-"$ROOT/work"}
 ENABLE_ZRAM=${ENABLE_ZRAM:-true}
-ENABLE_LZ4=${ENABLE_LZ4:-false}
+ENABLE_LZ4=${ENABLE_LZ4:-true}
 for value in "$ENABLE_ZRAM" "$ENABLE_LZ4"; do
   [[ $value == true || $value == false ]] || { echo "Invalid boolean: $value" >&2; exit 1; }
 done
