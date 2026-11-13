@@ -5,7 +5,8 @@ source "$ROOT/configs/sources.env"
 WORK=${WORK:-"$ROOT/work"}
 ENABLE_ZRAM=${ENABLE_ZRAM:-true}
 ENABLE_LZ4=${ENABLE_LZ4:-true}
-for value in "$ENABLE_ZRAM" "$ENABLE_LZ4"; do
+USE_THINLTO=${USE_THINLTO:-false}
+for value in "$ENABLE_ZRAM" "$ENABLE_LZ4" "$USE_THINLTO"; do
   [[ $value == true || $value == false ]] || { echo "Invalid boolean: $value" >&2; exit 1; }
 done
 mkdir -p "$WORK"
@@ -88,7 +89,16 @@ CONFIG="$KERNEL/scripts/config"
   -d LOCALVERSION_AUTO --set-str LOCALVERSION '-gdb39b3851f98'
 "$CONFIG" --file "$CFG" -e TMPFS_XATTR -e TMPFS_POSIX_ACL -e IP_NF_TARGET_TTL \
   -e IP6_NF_TARGET_HL -e IP6_NF_MATCH_HL -e TCP_CONG_ADVANCED \
-  -e TCP_CONG_BBR -e NET_SCH_FQ -e DEFAULT_BBR
+  -e TCP_CONG_BBR -e NET_SCH_FQ -e DEFAULT_BBR \
+  -e LRU_GEN -e LRU_GEN_ENABLED \
+  -e KSU_SUSFS_PRIORITY_UID_FILTER \
+  -e NTFS3_FS -e NTFS3_FS_POSIX_ACL \
+  -e EROFS_FS_ZIP_LZMA \
+  -e IP_SET -e IP_SET_HASH_IP -e IP_SET_HASH_NET \
+  -e TCP_CONG_WESTWOOD
+if [[ $USE_THINLTO == true ]]; then
+  "$CONFIG" --file "$CFG" -d LTO_CLANG_FULL -e LTO_CLANG_THIN
+fi
 # Existing SUSFS feature defaults are taken from pinned BakaSU, not stale symbol names.
 if [[ $ENABLE_ZRAM == true ]]; then
   "$CONFIG" --file "$CFG" -e ZSMALLOC -e ZRAM -e CRYPTO_LZ4K -e CRYPTO_LZ4KD \
@@ -96,7 +106,7 @@ if [[ $ENABLE_ZRAM == true ]]; then
 fi
 mkdir -p "$ROOT/dist"
 cp "$ROOT/configs/sources.env" "$ROOT/dist/sources.env"
-printf 'ENABLE_ZRAM=%s\nENABLE_LZ4=%s\n' "$ENABLE_ZRAM" "$ENABLE_LZ4" > "$ROOT/dist/options.env"
+printf 'ENABLE_ZRAM=%s\nENABLE_LZ4=%s\nUSE_THINLTO=%s\n' "$ENABLE_ZRAM" "$ENABLE_LZ4" "$USE_THINLTO" > "$ROOT/dist/options.env"
 git -C "$KERNEL" diff --binary > "$ROOT/dist/applied-kernel.diff"
 # Pin input records; final .config is saved by build-kernel.sh after Kconfig resolves it.
 echo 'Kernel preparation completed without rejected hunks.'

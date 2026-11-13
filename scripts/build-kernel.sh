@@ -21,7 +21,11 @@ CFG="$KERNEL/out/.config"
 cp "$CFG" "$ROOT/dist/kernel.config"
 require_config() { grep -qxF "$1" "$CFG" || { echo "Required config missing: $1" >&2; exit 1; }; }
 for setting in CONFIG_KSU=y CONFIG_KSU_SUSFS=y CONFIG_BBG=y CONFIG_MODVERSIONS=y \
-  CONFIG_KSU_MULTI_MANAGER_SUPPORT=y CONFIG_MODULE_SIG_PROTECT=y; do require_config "$setting"; done
+  CONFIG_KSU_MULTI_MANAGER_SUPPORT=y CONFIG_MODULE_SIG_PROTECT=y \
+  CONFIG_LRU_GEN_ENABLED=y CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER=y \
+  CONFIG_NTFS3_FS=y CONFIG_EROFS_FS_ZIP_LZMA=y CONFIG_IP_SET=y CONFIG_TCP_CONG_WESTWOOD=y; do
+  require_config "$setting"
+done
 if [[ $ENABLE_ZRAM == true ]]; then
   for setting in CONFIG_ZRAM=y CONFIG_ZSMALLOC=y CONFIG_CRYPTO_LZ4KD=y \
     CONFIG_ZRAM_DEF_COMP_LZ4KD=y 'CONFIG_ZRAM_DEF_COMP="lz4kd"'; do require_config "$setting"; done
