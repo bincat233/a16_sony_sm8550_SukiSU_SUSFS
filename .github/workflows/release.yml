@@ -1,6 +1,14 @@
 name: Build pdx234 LineageOS 24
 
 on:
+  push:
+    branches: [lineage-24-maintenance]
+    paths:
+      - '.github/workflows/release.yml'
+      - 'scripts/**'
+      - 'configs/**'
+      - 'patches/**'
+      - 'pdx234_defconfig'
   workflow_dispatch:
     inputs:
       enable_zram:
@@ -28,7 +36,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
-      ENABLE_ZRAM: ${{ inputs.enable_zram }}
+      ENABLE_ZRAM: ${{ github.event_name == 'push' || inputs.enable_zram }}
       ENABLE_LZ4: ${{ inputs.enable_lz4 }}
       BUILD_JOBS: '2'
     steps:
@@ -82,7 +90,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: pdx234-lineage24-bakasu-zram-${{ inputs.enable_zram }}-lz4-${{ inputs.enable_lz4 }}
+          name: pdx234-lineage24-bakasu-zram-${{ env.ENABLE_ZRAM }}-lz4-${{ env.ENABLE_LZ4 }}
           path: dist/
           if-no-files-found: error
           retention-days: 30
