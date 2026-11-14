@@ -33,20 +33,25 @@ KPM 不在当前 BakaSU 中，构建不提供 KPM 修补。保留 BBR、TTL/HL �
 
 ## 修改本地内核补丁
 
-本地补丁的可编辑源码在 `kernel/patches/<补丁名>/`，目录保留目标内核的文件路径。这里保存的是每个本地补丁修改后的完整文件，方便直接用编辑器阅读；固定版本上游代码和上游 SUSFS 主补丁仍由准备脚本获取，不在此单独维护。
+本地改动保存在 `patches/`；我们自行维护的 SELinux 过滤函数另有完整源码 `kernel/selinux/app_zygote_filter.c`。其他上游文件不在仓库复制，修改时通过临时 Git 工作区查看和编辑完整文件。
 
-例如 SELinux 的过滤函数在 `kernel/patches/selinux-app-zygote-oracle-hide/security/selinux/ss/app_zygote_filter.c`，查询接线在同目录下的 `hooks.c` 和 `selinuxfs.c`。其他目录分别对应同名的 `.patch`，其中包含 C、Kconfig 或 Makefile 等实际修改文件。
-
-修改源码后，确保 `work/kernel`、`work/susfs` 等已准备并与 `configs/sources.env` 的固定版本一致，然后执行：
+例如修改 SELinux 补丁：
 
 ```bash
-# 只更新一个补丁；省略参数可更新所有本地补丁。
-scripts/update-patches.py selinux-app-zygote-oracle-hide
+# 首次为该补丁创建编辑工作区（不会覆盖已有工作区）。
+scripts/update-patches.py create selinux-app-zygote-oracle-hide
+
+# 编辑 work/patch-edit/selinux-app-zygote-oracle-hide/ 下的完整源码。
+# 查看相对于上游的修改：
+git -C work/patch-edit/selinux-app-zygote-oracle-hide diff
+
+# 从工作区导出补丁。
+scripts/update-patches.py export selinux-app-zygote-oracle-hide
 ```
 
-脚本从固定版本的内核、BakaSU、SUSFS 和 LZ4 构造补丁前的临时 Git 基线，再从可编辑源码生成 `git diff`，并检查生成的补丁能否重现源码。无需依赖 `work/kernel` 中是否应用了本地补丁；生成 LZ4 补丁时需要已有固定版本的 `work/lz4`。审查并同时提交源码和生成的补丁。准备内核时会比较补丁结果与可编辑源码，不一致时停止。
+其他补丁使用对应的文件名或不带 `.patch` 的名称。脚本依据 `configs/sources.env` 的固定版本构造补丁前基线，应用现有补丁并创建独立 Git 工作区；导出时用 `git diff` 生成补丁，重新应用并逐文件核对。需要已准备的 `work/kernel`、`work/susfs`；修改 LZ4 补丁还需要固定版本的 `work/lz4`。编辑工作区位于被忽略的 `work/`，不要直接提交它。
 
-重新运行 `prepare-kernel.sh` 可应用新补丁。若要在当前工作区直接编译，需要把修改后的文件复制到 `work/kernel` 的对应位置；重新生成补丁不会自动覆盖工作区。
+SELinux 的 `app_zygote_filter.c` 在创建工作区时从 `kernel/selinux/` 复制进去，导出时从工作区同步回仓库。准备构建时会检查独立源码与补丁一致。修改并导出后，重新准备内核源码才能应用新补丁；编辑工作区不会自动改变 `work/kernel`。
 
 ## 补丁审核
 

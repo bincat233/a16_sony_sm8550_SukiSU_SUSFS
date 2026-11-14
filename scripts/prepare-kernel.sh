@@ -32,15 +32,7 @@ apply_patch() {
   local file=$1
   patch --dry-run --batch --forward --fuzz=0 -p1 -d "$KERNEL" < "$file"
   patch --batch --forward --fuzz=0 -p1 -d "$KERNEL" < "$file"
-  if [[ $file == "$ROOT/patches/"* ]]; then
-    local relative source_dir
-    source_dir="$ROOT/kernel/patches/$(basename "$file" .patch)"
-    while IFS= read -r relative; do
-      cmp "$source_dir/$relative" "$KERNEL/$relative" || {
-        echo "Patch source differs: $relative; run scripts/update-patches.py" >&2; return 1;
-      }
-    done < <(sed -n 's|^+++ b/||p' "$file")
-  fi
+
 }
 
 fetch_source "$KERNEL_REPO" "$KERNEL_SHA" "$KERNEL"
@@ -68,6 +60,9 @@ apply_patch "$ROOT/patches/fix_priority_uid_filter_kconfig.patch"
 apply_patch "$ROOT/patches/susfs-2.4.0-priority-uid-filter-unused-fix.patch"
 apply_patch "$ROOT/patches/silence-log-spam.patch"
 apply_patch "$ROOT/patches/selinux-app-zygote-oracle-hide.patch"
+cmp "$ROOT/kernel/selinux/app_zygote_filter.c" "$KERNEL/security/selinux/ss/app_zygote_filter.c" || {
+  echo 'SELinux source and patch differ; export the SELinux editing workspace' >&2; exit 1;
+}
 
 if [[ $ENABLE_LZ4 == true ]]; then
   fetch_source "$LZ4_REPO" "$LZ4_SHA" "$WORK/lz4"

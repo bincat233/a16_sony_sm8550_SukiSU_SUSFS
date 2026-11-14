@@ -63,61 +63,90 @@ def run(args, **kwargs):
     return subprocess.run(args, check=True, **kwargs)
 
 
-def generate(patch):
+def patch_files(patch):
     content = patch.read_bytes()
     names = re.findall(rb'^\+\+\+ b/(.+)$', content, re.MULTILINE)
     files = [Path(os.fsdecode(name)) for name in names]
     if not files or len(files) != len(set(files)):
         raise ValueError(f'{patch.name}: invalid or duplicate paths')
-    for name in files:
-        if name.is_absolute() or '..' in name.parts:
-            raise ValueError(f'{patch.name}: unsafe path {name}')
-    source = ROOT / 'kernel' / 'patches' / patch.stem
-    with tempfile.TemporaryDirectory(prefix='kernel-patch-') as temp:
+    if any(name.is_absolute() or '..' in name.parts for name in files):
+        raise ValueError(f'{patch.name}: unsafe path')
+    return files
+
+
+def patch_path(name):
+    name = Path(name).name
+    if not name.endswith('.patch'):
+        name += '.patch'
+    patch = ROOT / 'patches' / name
+    if not patch.is_file():
+        raise ValueError(f'Unknown patch: {name}')
+    return patch
+
+
+def edit_path(patch):
+    return WORK / 'patch-edit' / patch.stem
+
+
+def create(patch):
+    files = patch_files(patch)
+    path = edit_path(patch)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.mkdir()  # Never overwrite an existing editing workspace.
+    try:
+        populate_baseline(path, files)
+        run(['git', 'init', '-q', str(path)])
+        run(['git', '-C', str(path), 'add', '-A'])
+        run(['git', '-C', str(path), '-c', 'user.name=Patch Workspace',
+             '-c', 'user.email=patch-workspace@localhost', 'commit',
+             '--allow-empty', '-qm', 'baseline'])
+        run(['patch', '--batch', '--fuzz=0', '-p1', '-d', str(path)],
+            input=patch.read_bytes(), stdout=subprocess.DEVNULL)
+        own = Path('security/selinux/ss/app_zygote_filter.c')
+        if own in files:
+            shutil.copy2(ROOT / 'kernel/selinux/app_zygote_filter.c', path / own)
+        run(['git', '-C', str(path), 'add', '-N', '--', *map(str, files)])
+    except Exception:
+        shutil.rmtree(path)
+        raise
+    print(f'Editable workspace: {path}')
+
+
+def export(patch):
+    files = patch_files(patch)
+    path = edit_path(patch)
+    if not (path / '.git').exists():
+        raise ValueError(f'Workspace missing: {path}; create it first')
+    run(['git', '-C', str(path), 'add', '-N', '--', *map(str, files)])
+    result = subprocess.check_output(['git', '-C', str(path), 'diff', '--binary', '--', *map(str, files)])
+    if not result:
+        raise ValueError(f'{patch.name}: empty patch')
+    # Rebuild the pinned baseline and verify the generated patch reproduces the workspace.
+    with tempfile.TemporaryDirectory(prefix='kernel-patch-check-') as temp:
         base = Path(temp)
         populate_baseline(base, files)
-        run(['git', 'init', '-q', str(base)])
-        run(['git', '-C', str(base), 'add', '-A'])
-        run(['git', '-C', str(base), '-c', 'user.name=Patch Generator',
-             '-c', 'user.email=patch-generator@localhost', 'commit',
-             '--allow-empty', '-qm', 'baseline'])
-        for name in files:
-            dest = base / name
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source / name, dest)
-        run(['git', '-C', str(base), 'add', '-N', '--', *map(str, files)])
-        result = subprocess.check_output(['git', '-C', str(base), 'diff', '--binary', '--', *map(str, files)])
-        if not result:
-            raise ValueError(f'{patch.name}: empty patch')
-        # Verify the generated diff applies cleanly and reproduces the edited files.
-        run(['git', '-C', str(base), 'reset', '--hard', '-q', 'HEAD'])
-        for name in files:
-            if (base / name).exists() and not subprocess.run(
-                    ['git', '-C', str(base), 'ls-files', '--error-unmatch', '--', str(name)],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
-                (base / name).unlink()
         run(['patch', '--batch', '--fuzz=0', '-p1', '-d', str(base)], input=result,
             stdout=subprocess.DEVNULL)
         for name in files:
-            if (base / name).read_bytes() != (source / name).read_bytes():
+            if (base / name).read_bytes() != (path / name).read_bytes():
                 raise ValueError(f'{patch.name}: verification failed for {name}')
-        patch.write_bytes(result)
-        print(f'Updated {patch.relative_to(ROOT)}')
+    own = Path('security/selinux/ss/app_zygote_filter.c')
+    if own in files:
+        shutil.copy2(path / own, ROOT / 'kernel/selinux/app_zygote_filter.c')
+    patch.write_bytes(result)
+    print(f'Updated {patch.relative_to(ROOT)}')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('patch', nargs='*', help='patch filenames or stems; default: all local patches')
+    parser.add_argument('command', choices=('create', 'export'))
+    parser.add_argument('patch', help='local patch filename or stem')
     args = parser.parse_args()
-    patches = sorted((ROOT / 'patches').glob('*.patch'))
-    if args.patch:
-        requested = {Path(p).stem for p in args.patch}
-        patches = [p for p in patches if p.stem in requested]
-        missing = requested - {p.stem for p in patches}
-        if missing:
-            parser.error('unknown patches: ' + ', '.join(sorted(missing)))
-    for patch in patches:
-        generate(patch)
+    patch = patch_path(args.patch)
+    if args.command == 'create':
+        create(patch)
+    else:
+        export(patch)
 
 
 if __name__ == '__main__':
