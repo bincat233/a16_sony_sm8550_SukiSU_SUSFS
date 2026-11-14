@@ -89,7 +89,7 @@ CONFIG="$KERNEL/scripts/config"
   -e KSU_MULTI_MANAGER_SUPPORT -e BBG -d BBG_BLOCK_BOOT -d BBG_BLOCK_RECOVERY \
   --set-str LSM 'landlock,lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,bpf,baseband_guard' \
   -d LOCALVERSION_AUTO --set-str LOCALVERSION '-gdb39b3851f98'
-"$CONFIG" --file "$CFG" -e TMPFS_XATTR -e TMPFS_POSIX_ACL -e IP_NF_TARGET_TTL \
+"$CONFIG" --file "$CFG" -e TMPFS_XATTR -e TMPFS_POSIX_ACL -e TMPFS_INODE64 -e IP_NF_TARGET_TTL \
   -e IP6_NF_TARGET_HL -e IP6_NF_MATCH_HL -e TCP_CONG_ADVANCED \
   -e TCP_CONG_BBR -e NET_SCH_FQ -e DEFAULT_BBR \
   -e LRU_GEN -e LRU_GEN_ENABLED \
