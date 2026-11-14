@@ -58,6 +58,7 @@ apply_patch "$ROOT/patches/fix_priority_uid_filter_kconfig.patch"
 # Guard unused helpers as fallback when CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER is disabled
 apply_patch "$ROOT/patches/susfs-2.4.0-priority-uid-filter-unused-fix.patch"
 apply_patch "$ROOT/patches/silence-log-spam.patch"
+apply_patch "$ROOT/patches/selinux-app-zygote-oracle-hide.patch"
 
 if [[ $ENABLE_LZ4 == true ]]; then
   fetch_source "$LZ4_REPO" "$LZ4_SHA" "$WORK/lz4"
