@@ -31,9 +31,26 @@ KPM 不在当前 BakaSU 中，构建不提供 KPM 修补。保留 BBR、TTL/HL �
 
 本地可调用 `scripts/prepare-kernel.sh` 和 `scripts/build-kernel.sh`。`WORK` 目录必须是新的；源代码准备拒绝复用已有目标目录。`CLANG_DIR` 指向解压的 Android Clang；默认是仓库 `clang/`。`CONFIG_ONLY=true` 仅生成并检查配置，不编译。
 
+## 修改本地内核补丁
+
+本地补丁的可编辑源码在 `kernel/patches/<补丁名>/`，目录保留目标内核的文件路径。这里保存的是每个本地补丁修改后的完整文件，方便直接用编辑器阅读；固定版本上游代码和上游 SUSFS 主补丁仍由准备脚本获取，不在此单独维护。
+
+例如 SELinux 的过滤函数在 `kernel/patches/selinux-app-zygote-oracle-hide/security/selinux/ss/app_zygote_filter.c`，查询接线在同目录下的 `hooks.c` 和 `selinuxfs.c`。其他目录分别对应同名的 `.patch`，其中包含 C、Kconfig 或 Makefile 等实际修改文件。
+
+修改源码后，确保 `work/kernel`、`work/susfs` 等已准备并与 `configs/sources.env` 的固定版本一致，然后执行：
+
+```bash
+# 只更新一个补丁；省略参数可更新所有本地补丁。
+scripts/update-patches.py selinux-app-zygote-oracle-hide
+```
+
+脚本从固定版本的内核、BakaSU、SUSFS 和 LZ4 构造补丁前的临时 Git 基线，再从可编辑源码生成 `git diff`，并检查生成的补丁能否重现源码。无需依赖 `work/kernel` 中是否应用了本地补丁；生成 LZ4 补丁时需要已有固定版本的 `work/lz4`。审查并同时提交源码和生成的补丁。准备内核时会比较补丁结果与可编辑源码，不一致时停止。
+
+重新运行 `prepare-kernel.sh` 可应用新补丁。若要在当前工作区直接编译，需要把修改后的文件复制到 `work/kernel` 的对应位置；重新生成补丁不会自动覆盖工作区。
+
 ## 补丁审核
 
-- 固定的 SUSFS 主补丁在目标 Sony 源码上零 fuzz 应用，不需要 Kingo64 的 Sony fixup 或 Priority UID Kconfig 补丁。
+- 固定的 SUSFS 主补丁在目标 Sony 源码上零 fuzz 应用；Priority UID Filter 的 Kconfig 和未使用函数问题由本地补丁处理。
 - 不执行移动分支的 setup.sh；直接接入已核对、已固定的 KSU/BBG 源码。
 - `patch` 先 dry-run，再以零 fuzz 应用；拒绝 `.rej`。Shell 启用 pipefail，依赖逐个校验 SHA。
 - `patches/lz4kd-5.15.211.patch` 来自固定的 SukiSU_patch，重新生成精确上下文，排除其 module.c 改动。

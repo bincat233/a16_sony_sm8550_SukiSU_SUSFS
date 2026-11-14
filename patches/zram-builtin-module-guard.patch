@@ -1,5 +1,5 @@
 diff --git a/kernel/module.c b/kernel/module.c
-index a2502e908..99b2c3d95 100644
+index a2502e9..99b2c3d 100644
 --- a/kernel/module.c
 +++ b/kernel/module.c
 @@ -3596,6 +3596,15 @@ static bool blacklisted(const char *module_name)

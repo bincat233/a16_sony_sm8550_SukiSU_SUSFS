@@ -8,6 +8,7 @@ on:
       - 'scripts/**'
       - 'configs/**'
       - 'patches/**'
+      - 'kernel/**'
       - 'pdx234_defconfig'
   workflow_dispatch:
     inputs:

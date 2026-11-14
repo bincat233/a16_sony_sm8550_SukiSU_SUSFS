@@ -1,5 +1,5 @@
 diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 4b284184b..c75aadd2e 100644
+index 4b28418..c75aadd 100644
 --- a/crypto/Kconfig
 +++ b/crypto/Kconfig
 @@ -1819,6 +1819,22 @@ config CRYPTO_LZ4
@@ -26,7 +26,7 @@ index 4b284184b..c75aadd2e 100644
  	tristate "LZ4HC compression algorithm"
  	select CRYPTO_ALGAPI
 diff --git a/crypto/Makefile b/crypto/Makefile
-index e726f5364..e59ff2023 100644
+index e726f53..e59ff20 100644
 --- a/crypto/Makefile
 +++ b/crypto/Makefile
 @@ -154,7 +154,9 @@ obj-$(CONFIG_CRYPTO_CRCT10DIF) += crct10dif_common.o crct10dif_generic.o
@@ -40,7 +40,7 @@ index e726f5364..e59ff2023 100644
  obj-$(CONFIG_CRYPTO_842) += 842.o
  obj-$(CONFIG_CRYPTO_RNG2) += rng.o
 diff --git a/drivers/block/zram/Kconfig b/drivers/block/zram/Kconfig
-index 668c6bf25..3bded7a08 100644
+index 668c6bf..3bded7a 100644
 --- a/drivers/block/zram/Kconfig
 +++ b/drivers/block/zram/Kconfig
 @@ -2,7 +2,7 @@
@@ -123,7 +123,7 @@ index 668c6bf25..3bded7a08 100644
  config ZRAM_WRITEBACK
         bool "Write back incompressible or idle page to backing device"
 diff --git a/drivers/block/zram/zcomp.c b/drivers/block/zram/zcomp.c
-index 0916de952..6c9902b20 100644
+index 0916de9..6c9902b 100644
 --- a/drivers/block/zram/zcomp.c
 +++ b/drivers/block/zram/zcomp.c
 @@ -25,6 +25,15 @@ static const char * const backends[] = {
@@ -143,7 +143,7 @@ index 0916de952..6c9902b20 100644
  	"842",
  #endif
 diff --git a/lib/Kconfig b/lib/Kconfig
-index 659129e87..f80a93abc 100644
+index 659129e..f80a93a 100644
 --- a/lib/Kconfig
 +++ b/lib/Kconfig
 @@ -331,12 +331,24 @@ config LZO_DECOMPRESS
@@ -172,7 +172,7 @@ index 659129e87..f80a93abc 100644
  	select XXHASH
  	tristate
 diff --git a/lib/Makefile b/lib/Makefile
-index 2420b4e9a..7dbaeccd2 100644
+index 2420b4e..7dbaecc 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
 @@ -190,6 +190,10 @@ obj-$(CONFIG_LZO_DECOMPRESS) += lzo/

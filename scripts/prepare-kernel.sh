@@ -32,6 +32,15 @@ apply_patch() {
   local file=$1
   patch --dry-run --batch --forward --fuzz=0 -p1 -d "$KERNEL" < "$file"
   patch --batch --forward --fuzz=0 -p1 -d "$KERNEL" < "$file"
+  if [[ $file == "$ROOT/patches/"* ]]; then
+    local relative source_dir
+    source_dir="$ROOT/kernel/patches/$(basename "$file" .patch)"
+    while IFS= read -r relative; do
+      cmp "$source_dir/$relative" "$KERNEL/$relative" || {
+        echo "Patch source differs: $relative; run scripts/update-patches.py" >&2; return 1;
+      }
+    done < <(sed -n 's|^+++ b/||p' "$file")
+  fi
 }
 
 fetch_source "$KERNEL_REPO" "$KERNEL_SHA" "$KERNEL"
