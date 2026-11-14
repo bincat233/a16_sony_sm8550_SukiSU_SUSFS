@@ -13,6 +13,7 @@ export KBUILD_BUILD_USER=bincat233 KBUILD_BUILD_HOST=github-actions
 export KBUILD_BUILD_TIMESTAMP='Sun Nov 8 00:00:00 UTC 2026'
 export KBUILD_BUILD_VERSION=1
 args=(O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 LOCALVERSION=
+  KBUILD_MODPOST_WARN=1
   CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-
   "-j${BUILD_JOBS:-2}" "LTO_JOBS=${LTO_JOBS:-2}")
 clang --version > "$ROOT/dist/compiler.txt"
