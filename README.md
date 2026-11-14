@@ -25,7 +25,7 @@ KPM 不在当前 BakaSU 中，构建不提供 KPM 修补。保留 BBR、TTL/HL �
 在 `lineage-24-maintenance` 分支手动运行 **Build pdx234 LineageOS 24**：
 
 - `enable_zram=true`：默认启用 LZ4KD，并将 ZRAM/ZSMALLOC 内建。
-- `enable_lz4=false`：额外的 LZ4 1.10.0 升级独立保留，默认关闭；验证时可单独开启。
+- `enable_lz4=true`：默认启用额外的 LZ4 1.10.0 升级；可以独立关闭。
 - 构建与下载写入 runner 磁盘，不建立 tmpfs。仅生成 Actions artifacts，不自动发布 Release。
 - 管理器只获取与固定 BakaSU SHA 一致的成功构建，找不到就失败，不回退到任意最新版。
 
@@ -54,6 +54,9 @@ scripts/update-patches.py export selinux-app-zygote-oracle-hide
 SELinux 的 `app_zygote_filter.c` 在创建工作区时从 `kernel/selinux/` 复制进去，导出时从工作区同步回仓库。准备构建时会检查独立源码与补丁一致。修改并导出后，重新准备内核源码才能应用新补丁；编辑工作区不会自动改变 `work/kernel`。
 
 ## 补丁审核
+
+组件来源、内建与模块状态、补丁应用顺序见 [内核组件和补丁清单](docs/KERNEL_COMPONENTS.md)。
+
 
 - 固定的 SUSFS 主补丁在目标 Sony 源码上零 fuzz 应用；Priority UID Filter 的 Kconfig 和未使用函数问题由本地补丁处理。
 - 不执行移动分支的 setup.sh；直接接入已核对、已固定的 KSU/BBG 源码。
